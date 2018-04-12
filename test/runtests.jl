@@ -24,21 +24,21 @@ m = rand(0x01:0xff,10)
 @test map(tree3morton ∘ morton3tree, m) == m
 
 for i=1:10
-  c = rand(0x01:0xff,2)
-  @test (tree2cartesian ∘ cartesian2tree)(c) == c
-  @test (morton2cartesian ∘ cartesian2morton)(c) == c
-  c = rand(0x01:0xff,3)
-  @test (tree3cartesian ∘ cartesian3tree)(c) == c
-  @test (morton3cartesian ∘ cartesian3morton)(c) == c
+    c = rand(0x01:0xff,2)
+    @test (tree2cartesian ∘ cartesian2tree)(c) == c
+    @test (morton2cartesian ∘ cartesian2morton)(c) == c
+    c = rand(0x01:0xff,3)
+    @test (tree3cartesian ∘ cartesian3tree)(c) == c
+    @test (morton3cartesian ∘ cartesian3morton)(c) == c
 end
 
 for i=1:10
-  t = rand(1:4,10)
-  while t[1]==1; shift!(t); end
-  @test (morton2tree ∘ tree2morton)(t) == t
-  @test (cartesian2tree ∘ tree2cartesian)(t) == t
-  t = rand(1:8,10)
-  while t[1]==1; shift!(t); end
-  @test (morton3tree ∘ tree3morton)(t) == t
-  @test (cartesian3tree ∘ tree3cartesian)(t) == t
+    t = rand(1:4,10)
+    while t[1]==1; shift!(t); end
+    @test (morton2tree ∘ tree2morton)(t) == t
+    @test (cartesian2tree ∘ tree2cartesian)(t) == t
+    t = rand(1:8,10)
+    while t[1]==1; shift!(t); end
+    @test (morton3tree ∘ tree3morton)(t) == t
+    @test (cartesian3tree ∘ tree3cartesian)(t) == t
 end
