@@ -209,6 +209,7 @@ julia> tree2cartesian([2,1,3])
 2-element Array{Int64,1}:
  5
  2
+```
 """
 function tree2cartesian(t::Vector{T}) where T<:Integer
     x = isodd(t[1]) ? 1 : 2
@@ -234,6 +235,7 @@ julia> tree3cartesian([2,1,3])
  5
  2
  1
+```
 """
 function tree3cartesian(t::Vector{T}) where T<:Integer
     x = isodd(t[1]) ? 1 : 2
@@ -261,6 +263,7 @@ julia> cartesian2tree([5,2])
  2
  1
  3
+```
 """
 cartesian2tree(c::Vector{T}) where T<:Integer =
       cartesian2tree(c, max(2,nextpow2(widen(maximum(c))))>>1)
@@ -286,6 +289,7 @@ julia> cartesian3tree([5,2,1])
  2
  1
  3
+```
 """
 cartesian3tree(c::Vector{T}) where T<:Integer =
       cartesian3tree(c, max(2,nextpow2(widen(maximum(c))))>>1)
