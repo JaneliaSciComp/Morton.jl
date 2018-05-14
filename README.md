@@ -84,6 +84,11 @@ octrees).  Simply replace the 2 with a 3:  `morton3cartesian`, `morton3tree`,
 etc.
 
 
+# Related packages
+
+[RegionTrees](https://github.com/rdeits/RegionTrees.jl)
+
+
 # Author
 
 [Ben Arthur](http://www.janelia.org/people/research-resources-staff/ben-arthur), arthurb@hhmi.org  
