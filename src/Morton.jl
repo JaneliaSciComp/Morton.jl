@@ -198,8 +198,19 @@ julia> morton3tree(67)
 morton3tree(m::Integer) = _mortonNtree(m,8)
 
 
+function _treeNcartesian(t::Vector{T}, ndim::Integer) where T<:Integer
+    c = [((t[1]-1)>>b)&1+1 for b in 0:ndim-1]
+    if length(t)>1
+        cn = _treeNcartesian(t[2:end], ndim)
+        m = 2^(length(t)-1)
+        return [m*(c[i]-1)+cn[i] for i in 1:ndim]
+    else
+        return c
+    end
+end
+
 """
-   tree2cartesian(t::Vector) -> [x,y]
+   tree2cartesian(t::Vector) -> c::Vector
 
 Given quadtree coordinate, return the corresponding 2-D Cartesian coordinate.
 
@@ -211,20 +222,10 @@ julia> tree2cartesian([2,1,3])
  2
 ```
 """
-function tree2cartesian(t::Vector{T}) where T<:Integer
-    x = isodd(t[1]) ? 1 : 2
-    y = t[1]<3 ? 1 : 2
-    if length(t)>1
-        xn,yn = tree2cartesian(t[2:end])
-        m = 2^(length(t)-1)
-        return [m*(x-1)+xn, m*(y-1)+yn]
-    else
-        return [x,y]
-    end
-end
+tree2cartesian(t::Vector{T}) where T<:Integer = _treeNcartesian(t, 2)
 
 """
-   tree3cartesian(t::Vector) -> [x,y,z]
+   tree3cartesian(t::Vector) -> c::Vector
 
 Given octree coordinate, return the corresponding 3-D Cartesian coordinate.
 
@@ -237,19 +238,20 @@ julia> tree3cartesian([2,1,3])
  1
 ```
 """
-function tree3cartesian(t::Vector{T}) where T<:Integer
-    x = isodd(t[1]) ? 1 : 2
-    y = (t[1]-1)&3<2 ? 1 : 2
-    z = t[1]<5 ? 1 : 2
-    if length(t)>1
-        xn,yn,zn = tree3cartesian(t[2:end])
-        m = 2^(length(t)-1)
-        return [m*(x-1)+xn, m*(y-1)+yn, m*(z-1)+zn]
+tree3cartesian(t::Vector{T}) where T<:Integer = _treeNcartesian(t, 3)
+
+
+function _cartesianNtree(c::Vector{T}, half, ndim::Integer) where T<:Integer
+    t = 1
+    for d=1:ndim
+        t += 2^(d-1)*(c[d]>half)
+    end
+    if half>1
+        return [t, _cartesianNtree(map(x->(x-1)%half+1,c), half>>1, ndim)...]
     else
-        return [x,y,z]
+        return [t]
     end
 end
-
 
 """
    cartesian2tree(c::Vector) -> t::Vector
@@ -266,16 +268,7 @@ julia> cartesian2tree([5,2])
 ```
 """
 cartesian2tree(c::Vector{T}) where T<:Integer =
-      cartesian2tree(c, max(2,nextpow2(widen(maximum(c))))>>1)
-
-function cartesian2tree(c::Vector{T}, half) where T<:Integer
-    t = (c[1]>half) + 2*(c[2]>half) + 1
-    if half>1
-        return [t, cartesian2tree(map(x->(x-1)%half+1,c), half>>1)...]
-    else
-        return [t]
-    end
-end
+      _cartesianNtree(c, max(2,nextpow2(widen(maximum(c))))>>1, 2)
 
 """
    cartesian3tree(c::Vector) -> t::Vector
@@ -292,15 +285,6 @@ julia> cartesian3tree([5,2,1])
 ```
 """
 cartesian3tree(c::Vector{T}) where T<:Integer =
-      cartesian3tree(c, max(2,nextpow2(widen(maximum(c))))>>1)
-
-function cartesian3tree(c::Vector{T}, half) where T<:Integer
-    t = (c[1]>half) + 2*(c[2]>half) + 4*(c[3]>half) + 1
-    if half>1
-        return [t, cartesian3tree(map(x->(x-1)%half+1,c), half>>1)...]
-    else
-        return [t]
-    end
-end
+      _cartesianNtree(c, max(2,nextpow2(widen(maximum(c))))>>1, 3)
 
 end # module
