@@ -119,8 +119,9 @@ end
 function _treeNmorton(t::Vector{T}, ndim::Integer) where T<:Integer
     n=m=0
     it=length(t)
+    ndim2=2^ndim
     while it>0
-      m += (t[it]-1)*(2^ndim)^n
+      m += (t[it]-1)*ndim2^n
       n += 1
       it-=1
     end
@@ -156,8 +157,9 @@ tree3morton(t::Vector{T}) where T<:Integer = _treeNmorton(t,3)
 
 function _mortonNtree(m::T, ndim::Integer) where T<:Integer
     t=T[]
+    ndim2=2^ndim
     while true
-        d,r = [divrem(m-1,ndim)...]+[1,1]
+        d,r = [divrem(m-1,ndim2)...]+[1,1]
         unshift!(t,r)
         d==1 && break
         m=d
@@ -179,7 +181,7 @@ julia> morton2tree(19)
  3
 ```
 """
-morton2tree(m::Integer) = _mortonNtree(m,4)
+morton2tree(m::Integer) = _mortonNtree(m,2)
 
 """
     morton3tree(m::Integer) -> t::Vector
@@ -195,7 +197,7 @@ julia> morton3tree(67)
  3
 ```
 """
-morton3tree(m::Integer) = _mortonNtree(m,8)
+morton3tree(m::Integer) = _mortonNtree(m,3)
 
 
 function _treeNcartesian(t::Vector{T}, ndim::Integer) where T<:Integer
