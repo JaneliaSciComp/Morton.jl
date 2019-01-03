@@ -160,7 +160,7 @@ function _mortonNtree(m::T, ndim::Integer) where T<:Integer
     ndim2=2^ndim
     while true
         d,r = [divrem(m-1,ndim2)...]+[1,1]
-        unshift!(t,r)
+        pushfirst!(t,r)
         d==1 && break
         m=d
     end
@@ -270,7 +270,7 @@ julia> cartesian2tree([5,2])
 ```
 """
 cartesian2tree(c::Vector{T}) where T<:Integer =
-      _cartesianNtree(c, max(2,nextpow2(widen(maximum(c))))>>1, 2)
+      _cartesianNtree(c, max(2,nextpow(2, widen(maximum(c))))>>1, 2)
 
 """
    cartesian3tree(c::Vector) -> t::Vector
@@ -287,6 +287,6 @@ julia> cartesian3tree([5,2,1])
 ```
 """
 cartesian3tree(c::Vector{T}) where T<:Integer =
-      _cartesianNtree(c, max(2,nextpow2(widen(maximum(c))))>>1, 3)
+      _cartesianNtree(c, max(2,nextpow(2, widen(maximum(c))))>>1, 3)
 
 end # module

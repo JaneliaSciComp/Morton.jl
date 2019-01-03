@@ -1,5 +1,5 @@
 using Morton
-using Base.Test
+using Test
 
 @test cartesian2morton([5,2]) == 19
 @test cartesian3morton([5,2,1]) == 67
@@ -15,7 +15,7 @@ using Base.Test
 @test cartesian3tree([5,2,1]) ==  [2,1,3]
 
 
-srand(1234)
+Random.seed!(1234)
 
 m = rand(0x01:0xff,10)
 @test map(cartesian2morton ∘ morton2cartesian, m) == m
@@ -34,11 +34,11 @@ end
 
 for i=1:10
     t = rand(1:4,10)
-    while t[1]==1; shift!(t); end
+    while t[1]==1; popfirst!(t); end
     @test (morton2tree ∘ tree2morton)(t) == t
     @test (cartesian2tree ∘ tree2cartesian)(t) == t
     t = rand(1:8,10)
-    while t[1]==1; shift!(t); end
+    while t[1]==1; popfirst!(t); end
     @test (morton3tree ∘ tree3morton)(t) == t
     @test (cartesian3tree ∘ tree3cartesian)(t) == t
 end
