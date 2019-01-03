@@ -1,5 +1,6 @@
 using Morton
 using Test
+using Random
 
 @test cartesian2morton([5,2]) == 19
 @test cartesian3morton([5,2,1]) == 67
