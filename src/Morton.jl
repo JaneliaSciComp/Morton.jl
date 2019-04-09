@@ -40,12 +40,12 @@ julia> cartesian2morton([5,2])
 19
 ```
 """
-function cartesian2morton(c::Vector{T}) where T<:Integer
+function cartesian2morton(c::AbstractVector{T}) where T<:Integer
     (_Part1By1(c[2]-1) << 1) + _Part1By1(c[1]-1) - 2
 end
 
 """
-    cartesian3morton(c::Vector) -> m::Integer
+    cartesian3morton(c::AbstractVector) -> m::Integer
 
 Given a 3-D Cartesian coordinate, return the corresponding Morton number.
 
@@ -55,7 +55,7 @@ julia> cartesian3morton([5,2,1])
 67
 ```
 """
-function cartesian3morton(c::Vector{T}) where T<:Integer
+function cartesian3morton(c::AbstractVector{T}) where T<:Integer
     (_Part1By2(c[3]-1) << 2) + (_Part1By2(c[2]-1) << 1) + _Part1By2(c[1]-1) - 6
 end
 
@@ -116,7 +116,7 @@ function morton3cartesian(m::Integer)
 end
 
 
-function _treeNmorton(t::Vector{T}, ndim::Integer) where T<:Integer
+function _treeNmorton(t::AbstractVector{T}, ndim::Integer) where T<:Integer
     n=m=0
     it=length(t)
     ndim2=2^ndim
@@ -129,7 +129,7 @@ function _treeNmorton(t::Vector{T}, ndim::Integer) where T<:Integer
 end
 
 """
-    tree2morton(t::Vector) -> m::Integer
+    tree2morton(t::AbstractVector) -> m::Integer
 
 Given a quadtree coordinate, return the corresponding Morton number.
 
@@ -139,10 +139,10 @@ julia> tree2morton([2,1,3])
 19
 ```
 """
-tree2morton(t::Vector{T}) where T<:Integer = _treeNmorton(t,2)
+tree2morton(t::AbstractVector{T}) where T<:Integer = _treeNmorton(t,2)
 
 """
-    tree3morton(t::Vector) -> m::Integer
+    tree3morton(t::AbstractVector) -> m::Integer
 
 Given a octree coordinate, return the corresponding Morton number.
 
@@ -152,7 +152,7 @@ julia> tree3morton([2,1,3])
 67
 ```
 """
-tree3morton(t::Vector{T}) where T<:Integer = _treeNmorton(t,3)
+tree3morton(t::AbstractVector{T}) where T<:Integer = _treeNmorton(t,3)
 
 
 function _mortonNtree(m::T, ndim::Integer) where T<:Integer
@@ -168,7 +168,7 @@ function _mortonNtree(m::T, ndim::Integer) where T<:Integer
 end
 
 """
-    morton2tree(m::Integer) -> t::Vector
+    morton2tree(m::Integer) -> t::AbstractVector
 
 Given a Morton number, return the corresponding quadtree coordinate.
 
@@ -184,7 +184,7 @@ julia> morton2tree(19)
 morton2tree(m::Integer) = _mortonNtree(m,2)
 
 """
-    morton3tree(m::Integer) -> t::Vector
+    morton3tree(m::Integer) -> t::AbstractVector
 
 Given a Morton number, return the corresponding octree coordinate.
 
@@ -200,7 +200,7 @@ julia> morton3tree(67)
 morton3tree(m::Integer) = _mortonNtree(m,3)
 
 
-function _treeNcartesian(t::Vector{T}, ndim::Integer) where T<:Integer
+function _treeNcartesian(t::AbstractVector{T}, ndim::Integer) where T<:Integer
     c = [((t[1]-1)>>b)&1+1 for b in 0:ndim-1]
     if length(t)>1
         cn = _treeNcartesian(t[2:end], ndim)
@@ -212,7 +212,7 @@ function _treeNcartesian(t::Vector{T}, ndim::Integer) where T<:Integer
 end
 
 """
-   tree2cartesian(t::Vector) -> c::Vector
+   tree2cartesian(t::AbstractVector) -> c::AbstractVector
 
 Given quadtree coordinate, return the corresponding 2-D Cartesian coordinate.
 
@@ -224,10 +224,10 @@ julia> tree2cartesian([2,1,3])
  2
 ```
 """
-tree2cartesian(t::Vector{T}) where T<:Integer = _treeNcartesian(t, 2)
+tree2cartesian(t::AbstractVector{T}) where T<:Integer = _treeNcartesian(t, 2)
 
 """
-   tree3cartesian(t::Vector) -> c::Vector
+   tree3cartesian(t::AbstractVector) -> c::AbstractVector
 
 Given octree coordinate, return the corresponding 3-D Cartesian coordinate.
 
@@ -240,10 +240,10 @@ julia> tree3cartesian([2,1,3])
  1
 ```
 """
-tree3cartesian(t::Vector{T}) where T<:Integer = _treeNcartesian(t, 3)
+tree3cartesian(t::AbstractVector{T}) where T<:Integer = _treeNcartesian(t, 3)
 
 
-function _cartesianNtree(c::Vector{T}, half, ndim::Integer) where T<:Integer
+function _cartesianNtree(c::AbstractVector{T}, half, ndim::Integer) where T<:Integer
     t = 1
     for d=1:ndim
         t += 2^(d-1)*(c[d]>half)
@@ -256,7 +256,7 @@ function _cartesianNtree(c::Vector{T}, half, ndim::Integer) where T<:Integer
 end
 
 """
-   cartesian2tree(c::Vector) -> t::Vector
+   cartesian2tree(c::AbstractVector) -> t::AbstractVector
 
 Given a 2-D Cartesian coordinate, return the corresponding quadtree coordinate.
 
@@ -269,11 +269,11 @@ julia> cartesian2tree([5,2])
  3
 ```
 """
-cartesian2tree(c::Vector{T}) where T<:Integer =
+cartesian2tree(c::AbstractVector{T}) where T<:Integer =
       _cartesianNtree(c, max(2,nextpow(2, widen(maximum(c))))>>1, 2)
 
 """
-   cartesian3tree(c::Vector) -> t::Vector
+   cartesian3tree(c::AbstractVector) -> t::AbstractVector
 
 Given a 3-D Cartesian coordinate, return the corresponding octree coordinate.
 
@@ -286,7 +286,7 @@ julia> cartesian3tree([5,2,1])
  3
 ```
 """
-cartesian3tree(c::Vector{T}) where T<:Integer =
+cartesian3tree(c::AbstractVector{T}) where T<:Integer =
       _cartesianNtree(c, max(2,nextpow(2, widen(maximum(c))))>>1, 3)
 
 end # module
