@@ -83,6 +83,11 @@ Corresponding functions also exist for three dimensional matrices (i.e.
 octrees).  Simply replace the 2 with a 3:  `morton3cartesian`, `morton3tree`,
 etc.
 
+There are also un-exported N-dimensional functions to convert between tree and
+Morton, and tree and Cartesian (e.g. `Morton._treeNmorton`).  Please let me
+know if you have a clever way to convert directly between Morton and Cartesian
+in arbitrary dimensions!
+
 
 # Related packages
 
