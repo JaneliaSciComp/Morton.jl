@@ -1,24 +1,11 @@
-struct MortonIndex{I}
-    m::I
-end
-Base.CartesianIndex{2}(mi::MortonIndex) = morton2cartesianindex(mi.m)
-Base.CartesianIndex{3}(mi::MortonIndex) = morton3cartesianindex(mi.m)
-MortonIndex(ci::CartesianIndex{2}) = MortonIndex(cartesian2morton(ci))
-MortonIndex(ci::CartesianIndex{3}) = MortonIndex(cartesian3morton(ci))
+"""
+    MortonIndices{N,A,I}
 
-function Base.convert(::Type{CartesianIndex{N}}, mi::MortonIndex)::CartesianIndex{N} where N
-    CartesianIndex{N}(mi)
-end
-
-function Base.convert(::Type{MortonIndex}, ci::CartesianIndex)::MortonIndex
-    MortonIndex(ci)
-end
-
-function Base.getindex(A::AbstractArray{T,N}, mi::MortonIndex) where {T,N}
-    ci = CartesianIndex{N}(mi)
-    getindex(A, ci)
-end
-
+# Parameters
+* N - Number of dimensions
+* A - Axes Type
+* I - Type of integer holding the Morton index
+"""
 struct MortonIndices{N,A,I} <: AbstractArray{MortonIndex{I},N}
     cartesian::CartesianIndices{N,A}
 end

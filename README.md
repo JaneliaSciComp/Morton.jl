@@ -11,32 +11,32 @@ and [quadtree](https://en.wikipedia.org/wiki/Quadtree) and
 Say for example you have a 4x4 matrix.  The sixteen cells could be addressed in
 each of the following three ways.
 
-Morton order:
+Morton order (column major):
 
 | | | | |
 |---|---|---|---|
-1|2|5|6
-3|4|7|8
-9|10|13|14
-11|12|15|16
+1|3|9|11
+2|4|10|12
+5|7|13|15
+6|8|14|16
 
-Cartesian coordinates:
-
-| | | | |
-|---|---|---|---|
-1,1|2,1|3,1|4,1
-1,2|2,2|3,2|4,2
-1,3|2,3|3,3|4,3
-1,4|2,4|3,4|4,4
-
-Quadtree coordinates:
+Cartesian indices (column major):
 
 | | | | |
 |---|---|---|---|
-1,1|1,2|2,1|2,2
-1,3|1,4|2,3|2,4
-3,1|3,2|4,1|4,2
-3,3|3,4|4,3|4,4
+1,1|1,2|1,3|1,4
+2,1|2,2|2,3|2,4
+3,1|3,2|3,3|3,4
+4,1|4,2|4,3|4,4
+
+Quadtree coordinates (column major):
+
+| | | | |
+|---|---|---|---|
+1,1|3,1|3,1|3,3
+2,1|4,1|3,2|3,4
+2,1|2,3|4,1|4,3
+2,2|2,4|4,2|4,4
 
 To convert from Morton to Cartesian, use the `morton2cartesian` function:
 
@@ -48,6 +48,12 @@ julia> morton2cartesian(13)
 2-element Array{Int64,1}:
 3
 3
+
+julia> morton2cartesianindex(21)
+CartesianIndex(7, 1)
+
+julia> CartesianIndex{2}(MortonIndex(29))
+CartesianIndex(7, 3)
 ```
 
 Similarly, one can convert from Morton to quadtree, or Cartesian to quadtree:
@@ -69,6 +75,12 @@ Of course each of the functions can be reversed:
 ```
 julia> cartesian2morton([3,3])
 13
+
+julia> cartesian2morton(CartesianIndex(3,3))
+13
+
+julia> MortonIndex(CartesianIndex(3,3))
+MortonIndex{Int64}(13)
 
 julia> tree2morton([4,1])
 13

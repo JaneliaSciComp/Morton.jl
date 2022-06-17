@@ -2,11 +2,12 @@ module Morton
 
 export cartesian2morton, cartesian3morton
 export morton2cartesian, morton3cartesian
+export morton2cartesianindex, morton3cartesianindex
 export tree2morton, tree3morton
 export morton2tree, morton3tree
 export tree2cartesian, tree3cartesian
 export cartesian2tree, cartesian3tree
-export MortonIndex, MortonIndices
+export MortonIndex, MortonIndices, MortonOrder
 
 ### https://fgiesen.wordpress.com/2009/12/13/decoding-morton-codes/
 
@@ -301,6 +302,8 @@ julia> cartesian3tree([5,2,1])
 cartesian3tree(c::AbstractVector{T}) where T<:Integer =
       _cartesianNtree(c, max(2,nextpow(2, widen(maximum(c))))>>1, 3)
 
+include("MortonIndex.jl")
 include("MortonIndices.jl")
+include("MortonOrder.jl")
 
 end # module

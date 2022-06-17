@@ -1,6 +1,6 @@
 name = "Morton"
 uuid = "2a6d852e-3fac-5a38-885c-fe708af2d09e"
-version = "0.1.1"
+version = "0.2.0"
 
 [compat]
 julia = "0.7, 1"
