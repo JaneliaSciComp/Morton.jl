@@ -6,6 +6,7 @@ export tree2morton, tree3morton
 export morton2tree, morton3tree
 export tree2cartesian, tree3cartesian
 export cartesian2tree, cartesian3tree
+export MortonIndex, MortonIndices
 
 ### https://fgiesen.wordpress.com/2009/12/13/decoding-morton-codes/
 
@@ -40,7 +41,7 @@ julia> cartesian2morton([5,2])
 19
 ```
 """
-function cartesian2morton(c::AbstractVector{T}) where T<:Integer
+function cartesian2morton(c::Union{AbstractVector{T},CartesianIndex{2}}) where T<:Integer
     (_Part1By1(c[2]-1) << 1) + _Part1By1(c[1]-1) - 2
 end
 
@@ -55,7 +56,7 @@ julia> cartesian3morton([5,2,1])
 67
 ```
 """
-function cartesian3morton(c::AbstractVector{T}) where T<:Integer
+function cartesian3morton(c::Union{AbstractVector{T},CartesianIndex{3}}) where T<:Integer
     (_Part1By2(c[3]-1) << 2) + (_Part1By2(c[2]-1) << 1) + _Part1By2(c[1]-1) - 6
 end
 
@@ -96,6 +97,13 @@ function morton2cartesian(m::Integer)
     [_Compact1By1(m>>0), _Compact1By1(m>>1)]
 end
 
+function morton2cartesianindex(m::Integer)
+    m -= 1
+    CartesianIndex(_Compact1By1(m>>0), _Compact1By1(m>>1))
+end
+
+
+
 """
     morton3cartesian(m::Integer) -> [x,y,z]
 
@@ -115,6 +123,10 @@ function morton3cartesian(m::Integer)
     [_Compact1By2(m>>0), _Compact1By2(m>>1), _Compact1By2(m>>2)]
 end
 
+function morton3cartesianindex(m::Integer)
+    m -= 1
+    CartesianIndex(_Compact1By2(m>>0), _Compact1By2(m>>1), _Compact1By2(m>>2))
+end
 
 function _treeNmorton(t::AbstractVector{T}, ndim::Integer) where T<:Integer
     n=m=0
@@ -288,5 +300,7 @@ julia> cartesian3tree([5,2,1])
 """
 cartesian3tree(c::AbstractVector{T}) where T<:Integer =
       _cartesianNtree(c, max(2,nextpow(2, widen(maximum(c))))>>1, 3)
+
+include("MortonIndices.jl")
 
 end # module
