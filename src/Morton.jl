@@ -31,6 +31,7 @@ function _Part1By2(x::Integer)
     x+1
 end
 
+# slow, remove
 @inline function _Part1ByN(x::Integer, ::Val{N}) where N
     @assert(N > 0, "N must be a positive integer.")
     d = digits(Bool, x, base=2)
@@ -38,7 +39,6 @@ end
     # powers = 0:(N+1):numdigits
     sum(d .<< ((0:length(d)-1)*(N+1))) + 1
 end
-#@inline mask(bits) = mapreduce(x->1 << (x-1), +, bits)
 @inline function mask(bits, I=Int32)
     m = zero(I)
     for b in bits
@@ -46,21 +46,13 @@ end
     end
     return m
 end
-@inline function _Part1ByN_fast(x::I, ::Val{N}) where {I <: Integer,N}
-    #nbits = sizeof(I)*8
-    #ndigits = nbits ÷ N
-    x &= mask(1:10)
-    x = (x | (x << 16)) & (mask(1:8) | mask(25:32))
-    x = (x | (x << 8))  & (mask(1:12:32) | mask(2:12:32) | mask(3:12:32) | mask(4:12:32))
-    x = (x | (x << 4))  & (mask(1:6:32) | mask(2:6:32))
-    x = (x | (x << 2))  & mask(1:3:32)
-    x + 1
-end
+
+# remove _Part1By2_fast, just for reference
 @inline function _Part1By2_fast(x::Integer)
     #nbits = sizeof(I)*8
     #ndigits = nbits ÷ N
     x &= mask(1:10)
-    x = (x | (x << 16)) & (mask(1:8) | mask(25:32))
+    x = (x | (x << 16)) & (mask(1:8) | mask(25:32)) # this should be mask(1:24:32) | mask(2:24:32) etc.
     x = (x | (x << 8))  & (mask(1:12:32) | mask(2:12:32) | mask(3:12:32) | mask(4:12:32))
     x = (x | (x << 4))  & (mask(1:6:32) | mask(2:6:32))
     x = (x | (x << 2))  & mask(1:3:32)
@@ -76,11 +68,14 @@ function _generate_Part1ByN(I, N)
         x &= $(mask(1:ndigits, unsigned(I)))
     ))
     for i in 2:num_shifts
+        # places to bit shift
         p = 2^(num_shifts-i)
+        # mask for bitshift
         mp = I(0x0)
         for m in I(0x1):I(p)
             mp |= mask(m:(S*p):nbits, unsigned(I))
         end
+        # add a line
         push!(v,:(
             x = (x | x << $(2^(N-1)*p)) & $mp
         ))
@@ -198,10 +193,12 @@ function _generate_Compact1ByN(I, N)
     ))
     for i in 2:num_shifts
         p = 2^(i-1)
+        # mask for each shift
         mp = I(0x0)
         for m in I(0x1):I(p)
             mp |= mask(m:(S*p):nbits, unsigned(I))
         end
+        # add a line to the code
         push!(v,:(
             x = (x | x >> $(p ÷ 2^(2-N))) & $mp
         ))

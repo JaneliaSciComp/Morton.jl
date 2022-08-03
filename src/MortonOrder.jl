@@ -27,6 +27,7 @@ function Base.iterate(mo::MortonOrder{N}, mi::MortonIndex) where N
 
     mi  = MortonIndex(mi.m + 1)
     ci = CartesianIndex{N}(mi)
+    # Optimize this by finding the large power of 2 that will fit in dimensions as initial bound
     while ci ∉ mo.cartesian && mi.m < last_mi.m
         mi  = MortonIndex(mi.m + 1)
         ci = CartesianIndex{N}(mi)
