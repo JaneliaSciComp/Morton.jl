@@ -2,10 +2,12 @@ module Morton
 
 export cartesian2morton, cartesian3morton
 export morton2cartesian, morton3cartesian
+export morton2cartesianindex, morton3cartesianindex
 export tree2morton, tree3morton
 export morton2tree, morton3tree
 export tree2cartesian, tree3cartesian
 export cartesian2tree, cartesian3tree
+export MortonIndex, MortonIndices, MortonOrder, MortonView
 
 ### https://fgiesen.wordpress.com/2009/12/13/decoding-morton-codes/
 
@@ -29,6 +31,80 @@ function _Part1By2(x::Integer)
     x+1
 end
 
+# slow, remove
+@inline function _Part1ByN(x::Integer, ::Val{N}) where N
+    @assert(N > 0, "N must be a positive integer.")
+    d = digits(Bool, x, base=2)
+    # numdigits = (length(d)-1)*(N+1) + 1
+    # powers = 0:(N+1):numdigits
+    sum(d .<< ((0:length(d)-1)*(N+1))) + 1
+end
+@inline function mask(bits, I=Int32)
+    m = zero(I)
+    for b in bits
+        m += one(I) << (b-1)
+    end
+    return m
+end
+
+# remove _Part1By2_fast, just for reference
+@inline function _Part1By2_fast(x::Integer)
+    #nbits = sizeof(I)*8
+    #ndigits = nbits ÷ N
+    x &= mask(1:10)
+    x = (x | (x << 16)) & (mask(1:8) | mask(25:32)) # this should be mask(1:24:32) | mask(2:24:32) etc.
+    x = (x | (x << 8))  & (mask(1:12:32) | mask(2:12:32) | mask(3:12:32) | mask(4:12:32))
+    x = (x | (x << 4))  & (mask(1:6:32) | mask(2:6:32))
+    x = (x | (x << 2))  & mask(1:3:32)
+    x + 1
+end
+function _generate_Part1ByN(I, N)
+    nbits = sizeof(I)*8
+    S = I(N + 1)
+    ndigits = nbits ÷ S
+    num_shifts = nbits - leading_zeros(I(nbits)) - 1
+    v = Vector{Any}()
+    push!(v,:(
+        x &= $(mask(1:ndigits, unsigned(I)))
+    ))
+    for i in 2:num_shifts
+        # places to bit shift
+        p = 2^(num_shifts-i)
+        # mask for bitshift
+        mp = I(0x0)
+        for m in I(0x1):I(p)
+            mp |= mask(m:(S*p):nbits, unsigned(I))
+        end
+        # add a line
+        push!(v,:(
+            x = (x | x << $(2^(N-1)*p)) & $mp
+        ))
+    end
+    push!(v, :(($I(x)+one($I))))
+    return Expr(:block, v...)
+end
+    #=
+    quote
+        x &= $(mask(1:ndigits))
+        x = (x | (x << 16)) & $(mask(1:8) | mask(25:32))
+        x = (x | (x << 8))  & $(mask(1:12:32) | mask(2:12:32) | mask(3:12:32) | mask(4:12:32))
+        x = (x | (x << 4))  & $(mask(1:6:32) | mask(2:6:32))
+        x = (x | (x << 2))  & $(mask(1:3:32))
+        x + 1
+    end
+    =#
+
+@generated function _Part1By1_gen(x::I)::I where I <: Integer
+    _generate_Part1ByN(I, 1)
+end
+
+@generated function _Part1By2_gen(x::I)::I where I <: Integer
+    _generate_Part1ByN(I, 2)
+end
+
+#_Part1ByN(x::Integer, ::Val{1}) = _Part1By1(x)
+#_Part1ByN(x::Integer, ::Val{2}) = _Part1By2(x)
+
 """
     cartesian2morton(c::Vector) -> m::Integer
 
@@ -40,7 +116,7 @@ julia> cartesian2morton([5,2])
 19
 ```
 """
-function cartesian2morton(c::AbstractVector{T}) where T<:Integer
+function cartesian2morton(c::Union{AbstractVector{T},CartesianIndex{2}}) where T<:Integer
     (_Part1By1(c[2]-1) << 1) + _Part1By1(c[1]-1) - 2
 end
 
@@ -55,7 +131,7 @@ julia> cartesian3morton([5,2,1])
 67
 ```
 """
-function cartesian3morton(c::AbstractVector{T}) where T<:Integer
+function cartesian3morton(c::Union{AbstractVector{T},CartesianIndex{3}}) where T<:Integer
     (_Part1By2(c[3]-1) << 2) + (_Part1By2(c[2]-1) << 1) + _Part1By2(c[1]-1) - 6
 end
 
@@ -78,6 +154,63 @@ function _Compact1By2(x::Integer)
     x+1
 end
 
+function _Compact1By2_64(x::Integer)
+    x &= 0x1249249249249249           # x = ---- 9--8 --7- -6-- 5--4 --3- -2-- 1--0
+    x = (x | (x >>  2)) & 0x030c30c3  # x = ---- --98 ---- 76-- --54 ---- 32-- --10
+    x = (x | (x >>  4)) & 0x0300f00f  # x = ---- --98 ---- ---- 7654 ---- ---- 3210
+    x = (x | (x >>  8)) & 0xff0000ff  # x = ---- --98 ---- ---- ---- ---- 7654 3210
+    x = (x | (x >> 16)) & 0x000003ff  # x = ---- ---- ---- ---- ---- --98 7654 3210
+    x+1
+end
+
+
+function _Compact1By3(x::Integer)
+    x &= 0x000000111111111             # x = ---9 ---8 ---7 ---6 ---5 ---4 ---3 ---2 ---1 ---0
+    x = (x | (x >>  4)) & 0x030c30c3   # x = ---- --98 ---- --76 ---- --54 ---- --32 ---- --10
+    x = (x | (x >>  8)) & 0x0300f00f   # x = ---- --98 ---- ---- 7654 ---- ---- 3210
+    x = (x | (x >>  16)) & 0xff0000ff  # x = ---- --98 ---- ---- ---- ---- 7654 3210
+    x = (x | (x >>  32)) & 0x000003ff  # x = ---- ---- ---- ---- ---- --98 7654 3210
+    x+1
+end
+
+function _Compact1ByN(x::Integer, ::Val{N}) where N
+    @assert(N > 0, "N must be positive")
+    d = digits(Bool, x, base=2)
+    bitidx = 1:(N+1):length(d)
+    sum(d[bitidx] .<< (0:length(bitidx)-1)) + 1
+end
+_Compact1ByN(x::Integer, ::Val{1}) = _Compact1By1(x)
+_Compact1ByN(x::Integer, ::Val{2}) = _Compact1By2(x)
+
+function _generate_Compact1ByN(I, N)
+    nbits = sizeof(I)*8
+    S = I(N + 1)
+    ndigits = nbits ÷ S
+    num_shifts = nbits - leading_zeros(I(nbits)) - 1
+    v = Vector{Any}()
+    push!(v,:(
+        x &= $(mask(1:S:(ndigits*S), unsigned(I)))
+    ))
+    for i in 2:num_shifts
+        p = 2^(i-1)
+        # mask for each shift
+        mp = I(0x0)
+        for m in I(0x1):I(p)
+            mp |= mask(m:(S*p):nbits, unsigned(I))
+        end
+        # add a line to the code
+        push!(v,:(
+            x = (x | x >> $(p ÷ 2^(2-N))) & $mp
+        ))
+    end
+    push!(v, :(($I(x)+one($I))))
+    return Expr(:block, v...)
+end
+
+@generated function _Compact1ByN_gen(x::I, ::Val{N}) where {I <: Integer, N}
+    _generate_Compact1ByN(I, N)
+end
+
 """
     morton2cartesian(m::Integer) -> [x,y]
 
@@ -95,6 +228,13 @@ function morton2cartesian(m::Integer)
     m -= 1
     [_Compact1By1(m>>0), _Compact1By1(m>>1)]
 end
+
+function morton2cartesianindex(m::Integer)
+    m -= 1
+    CartesianIndex(_Compact1By1(m>>0), _Compact1By1(m>>1))
+end
+
+
 
 """
     morton3cartesian(m::Integer) -> [x,y,z]
@@ -115,6 +255,10 @@ function morton3cartesian(m::Integer)
     [_Compact1By2(m>>0), _Compact1By2(m>>1), _Compact1By2(m>>2)]
 end
 
+function morton3cartesianindex(m::Integer)
+    m -= 1
+    CartesianIndex(_Compact1By2(m>>0), _Compact1By2(m>>1), _Compact1By2(m>>2))
+end
 
 function _treeNmorton(t::AbstractVector{T}, ndim::Integer) where T<:Integer
     n=m=0
@@ -288,5 +432,10 @@ julia> cartesian3tree([5,2,1])
 """
 cartesian3tree(c::AbstractVector{T}) where T<:Integer =
       _cartesianNtree(c, max(2,nextpow(2, widen(maximum(c))))>>1, 3)
+
+include("MortonIndex.jl")
+include("MortonIndices.jl")
+include("MortonOrder.jl")
+include("MortonView.jl")
 
 end # module
