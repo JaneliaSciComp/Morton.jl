@@ -1,7 +1,8 @@
 """
     MortonOrder{N,A}
+    MortonOrder(x::Union{CartesianIndices,AbstractArray,Tuple})
 
-An iterator in Morton order over 
+An iterator in Morton order over cartesian indices.
 
 # Parameters
 * N - Number of dimensions
@@ -11,6 +12,7 @@ struct MortonOrder{N,A}
     cartesian::CartesianIndices{N,A}
 end
 MortonOrder(x::Tuple) = MortonOrder(CartesianIndices(x))
+MortonOrder(x::AbstractArray) = MortonOrder(CartesianIndices(x))
 function Base.iterate(mo::MortonOrder{N}) where N
     if isempty(mo.cartesian)
         return nothing
@@ -42,4 +44,10 @@ function collect_by_sorting(mo::MortonOrder)
     mis = MortonIndex.(mo.cartesian)[:]
     p = sortperm(mis)
     return mo.cartesian[p]
+end
+
+# Allow indexing 
+function Base.getindex(A::AbstractArray, ::Type{MortonOrder})
+    mo = MortonOrder(A)
+    return A[collect(mo)]
 end

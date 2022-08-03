@@ -13,6 +13,7 @@ MortonIndices(cis::CartesianIndices) = MortonIndices{Int}(cis)
 MortonIndices{I}(cis::CartesianIndices{N,A}) where {N,A,I} = MortonIndices{N,A,I}(cis)
 MortonIndices(x::Tuple) = MortonIndices{Int}(x)
 MortonIndices{I}(x::NTuple{N,T}) where {N,T <: Integer,I} = MortonIndices{I}(CartesianIndices(x))
+MortonIndices{I}(x::NTuple{N,T}) where {N,T <: AbstractUnitRange,I} = MortonIndices{I}(CartesianIndices(x))
 
 function Base.getindex(mis::MortonIndices{N,A,II}, I::Int...) where {N,A,II}
     ci = getindex(mis.cartesian, I...)

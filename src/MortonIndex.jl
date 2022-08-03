@@ -10,6 +10,7 @@ end
 MortonIndex(ci::CartesianIndex{1}) = MortonIndex(ci[1])
 MortonIndex(ci::CartesianIndex{2}) = MortonIndex(cartesian2morton(ci))
 MortonIndex(ci::CartesianIndex{3}) = MortonIndex(cartesian3morton(ci))
+MortonIndex(ci::CartesianIndex{N}) where N = MortonIndex(cart)
 Base.isless(a::MortonIndex, b::MortonIndex) = a.m < b.m
 Base.getindex(mi::MortonIndex) = mi.m
 
@@ -29,6 +30,15 @@ function Base.getindex(A::AbstractArray{T,N}, mi::MortonIndex) where {T,N}
     ci = CartesianIndex{N}(mi)
     getindex(A, ci)
 end
+function Base.getindex(A::AbstractArray{T,N}, MI::AbstractVector{<: MortonIndex}) where {T, N}
+    CI = CartesianIndex{N}.(MI)
+    Base.getindex(A, CI)
+end
+function Base.setindex!(A::AbstractArray{T,N}, v, mi::MortonIndex) where {T,N}
+    ci = CartesianIndex{N}(mi)
+    setindex!(A, v, ci)
+end
+
 
 (::Type{I})(mi::MortonIndex{I}) where I = mi.m
 (::Type{N})(mi::MortonIndex{I}) where {N <: Number, I} = N(mi.m)
